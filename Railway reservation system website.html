@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Railway Reservation System - 905/T1</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e1a;--surface:#0f1628;--surface2:#141d35;--border:#1e2d55;--accent:#00c8ff;--accent2:#ff6b35;--text:#c8d8f0;--text-dim:#5a7090;--danger:#ff3d5a;--success:#00ff9d;--warning:#ffb800;--gold:#ffd700;--glow:0 0 20px rgba(0,200,255,0.3)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.track-line{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);z-index:100}
+header{position:relative;z-index:10;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(10,14,26,0.95)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo-text h1{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;color:white;text-transform:uppercase}
+.logo-text p{font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+.hstats{display:flex;gap:12px;align-items:center}
+.stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-family:'Share Tech Mono',monospace;font-size:11px;display:flex;align-items:center;gap:6px}
+.stat-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.main{position:relative;z-index:1;display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 72px)}
+.sidebar{border-right:1px solid var(--border);padding:16px;background:var(--surface);display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.slabel{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.slabel::after{content:'';flex:1;height:1px;background:var(--border)}
+.nav-tab{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}
+.nav-tab:hover{background:rgba(0,200,255,0.05);border-color:var(--border);color:var(--text)}
+.nav-tab.active{background:linear-gradient(135deg,rgba(0,200,255,0.1),rgba(255,107,53,0.05));border-color:var(--accent);color:var(--accent);box-shadow:var(--glow)}
+.nav-tab-icon{width:28px;height:28px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:13px}
+.nav-tab.active .nav-tab-icon{background:rgba(0,200,255,0.15)}
+.qs-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qs-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.qs-v{font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:bold;color:var(--accent)}
+.qs-l{font-size:9px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.ibox{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;margin-bottom:6px}
+.ibox .lbl{color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase}
+.content{padding:20px 28px;overflow-y:auto}
+.panel{display:none;animation:fadeIn 0.3s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ptitle{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;line-height:1}
+.psub{color:var(--text-dim);font-size:11px;margin-top:3px;margin-bottom:18px;font-family:'Share Tech Mono',monospace}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;max-width:680px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg{display:flex;flex-direction:column;gap:5px}.fg.full{grid-column:1/-1}.fg.third{grid-column:span 1}
+label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+input,select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 11px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px;transition:all 0.2s;outline:none;width:100%}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,200,255,0.1)}
+select option{background:var(--surface2);color:var(--text)}
+input::placeholder{color:var(--text-dim);opacity:0.5}
+.tatkal-toggle{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.2s}
+.tatkal-toggle.on{border-color:var(--gold);background:rgba(255,215,0,0.05)}
+.toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:all 0.3s;flex-shrink:0}
+.toggle-switch::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:all 0.3s}
+.tatkal-toggle.on .toggle-switch{background:var(--gold)}
+.tatkal-toggle.on .toggle-switch::after{left:19px;background:#000}
+.tatkal-label{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px}
+.tatkal-badge{background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:var(--gold);font-size:10px;font-family:'Share Tech Mono',monospace;padding:2px 8px;border-radius:10px;letter-spacing:1px}
+.payment-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.pay-opt{background:var(--surface2);border:2px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;transition:all 0.2s}
+.pay-opt:hover{border-color:var(--accent)}
+.pay-opt.selected{border-color:var(--accent);background:rgba(0,200,255,0.07);box-shadow:var(--glow)}
+.pay-icon{font-size:20px;margin-bottom:4px}
+.pay-name{font-size:10px;font-family:'Share Tech Mono',monospace;color:var(--text-dim);letter-spacing:1px}
+.pay-opt.selected .pay-name{color:var(--accent)}
+.btn{padding:10px 20px;border-radius:6px;border:none;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#0099cc);color:#000;box-shadow:var(--glow)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 0 24px rgba(0,200,255,0.5)}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#cc0022);color:white}
+.btn-danger:hover{transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-success{background:linear-gradient(135deg,var(--success),#00aa6e);color:#000}
+.btn-success:hover{transform:translateY(-1px)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#cc9900);color:#000}
+.toast-container{position:fixed;top:80px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface);border-radius:8px;padding:12px 16px;min-width:240px;border-left:3px solid;display:flex;align-items:flex-start;gap:10px;animation:slideIn 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(110%);opacity:0}}
+.toast.success{border-color:var(--success)}.toast.error{border-color:var(--danger)}.toast.info{border-color:var(--accent)}.toast.warn{border-color:var(--warning)}
+.toast-title{font-weight:700;font-size:12px;margin-bottom:2px}.toast-msg{font-size:11px;color:var(--text-dim)}
+.res-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;transition:all 0.2s;animation:fadeIn 0.3s ease;margin-bottom:10px}
+.res-card:hover{border-color:rgba(0,200,255,0.3)}
+.res-pnr{text-align:center;background:var(--surface2);border-radius:8px;padding:7px 11px;border:1px solid var(--border);min-width:80px}
+.pnr-label{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase}
+.pnr-value{font-family:'Share Tech Mono',monospace;font-size:17px;font-weight:bold;color:var(--accent)}
+.res-info{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.rfield label{font-size:9px;color:var(--text-dim);display:block;margin-bottom:2px}
+.rfield .val{font-size:12px;font-weight:600;color:white}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:9px;font-family:'Share Tech Mono',monospace}
+.badge-seat{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);color:var(--success)}
+.badge-class{background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);color:var(--accent2)}
+.badge-tatkal{background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:var(--gold)}
+.badge-pay{background:rgba(0,200,255,0.1);border:1px solid rgba(0,200,255,0.3);color:var(--accent)}
+.empty-state{text-align:center;padding:60px 40px;color:var(--text-dim)}
+.cancel-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;max-width:460px}
+.warning-box{background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.2);border-radius:8px;padding:12px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.warning-box p{font-size:11px;color:var(--warning);line-height:1.5}
+.preview-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:12px;display:none}
+.preview-card.visible{display:block}
+.preview-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.preview-row:last-child{border-bottom:none}
+.preview-row span:first-child{color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:10px}
+.preview-row span:last-child{color:white;font-weight:600}
+.dashboard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.dash-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.dc-blue::before{background:var(--accent)}.dc-orange::before{background:var(--accent2)}.dc-green::before{background:var(--success)}.dc-gold::before{background:var(--gold)}
+.dash-icon{font-size:20px;margin-bottom:8px}
+.dash-val{font-family:'Share Tech Mono',monospace;font-size:30px;font-weight:bold;line-height:1;margin-bottom:4px}
+.dc-blue .dash-val{color:var(--accent)}.dc-orange .dash-val{color:var(--accent2)}.dc-green .dash-val{color:var(--success)}.dc-gold .dash-val{color:var(--gold)}
+.dash-lbl{font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase}
+.activity-log{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.act-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px}
+.act-item:last-child{border-bottom:none}
+.act-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.d-book{background:var(--success)}.d-cancel{background:var(--danger)}.d-view{background:var(--accent)}.d-pay{background:var(--gold)}
+.act-time{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);margin-left:auto;flex-shrink:0}
+.divider{border:none;border-top:1px dashed var(--border);margin:14px 0}
+
+/* E-Ticket Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.visible{display:flex}
+.eticket{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative}
+.eticket-header{background:linear-gradient(135deg,#0a1628,#0f2040);padding:24px;border-radius:16px 16px 0 0;border-bottom:2px dashed var(--border);text-align:center}
+.eticket-logo{font-size:32px;margin-bottom:8px}
+.eticket-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:white}
+.eticket-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;margin-top:2px}
+.eticket-body{padding:24px}
+.eticket-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.ef label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:3px}
+.ef .ev{font-size:15px;font-weight:700;color:white}
+.ef .ev.big{font-family:'Share Tech Mono',monospace;color:var(--accent);font-size:20px}
+.eticket-route{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;text-align:center}
+.route-city{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:white}
+.route-arrow{font-size:20px;color:var(--accent)}
+.eticket-footer{background:var(--surface2);border-radius:0 0 16px 16px;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-top:2px dashed var(--border)}
+.ticket-stamp{display:flex;align-items:center;gap:6px;background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);border-radius:8px;padding:6px 12px}
+.ticket-stamp span{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--success);letter-spacing:1px}
+.close-modal{position:absolute;top:14px;right:14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s}
+.close-modal:hover{border-color:var(--danger);color:var(--danger)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* Payment modal */
+.pay-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:420px;max-width:95vw;position:relative;padding:24px}
+.pay-modal h2{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;margin-bottom:6px}
+.pay-modal .amount{font-family:'Share Tech Mono',monospace;font-size:32px;color:var(--success);margin-bottom:18px}
+.pay-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.pay-step{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px;font-size:13px}
+.pay-step-icon{font-size:18px;flex-shrink:0}
+.pay-step-info label{font-size:9px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:2px}
+.pay-step-info input{background:transparent;border:none;outline:none;padding:0;font-size:13px;color:white;width:100%}
+.processing{display:none;text-align:center;padding:20px}
+.processing.visible{display:block}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="track-line"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- E-Ticket Modal -->
+<div class="modal-overlay" id="eticketModal">
+  <div class="eticket" id="eticketContent">
+    <button class="close-modal" onclick="closeTicket()">✕</button>
+    <div class="eticket-header">
+      <div class="eticket-logo">🚄</div>
+      <div class="eticket-title">Indian Railways</div>
+      <div class="eticket-sub">Electronic Ticket · e-Ticket</div>
+    </div>
+    <div class="eticket-body">
+      <div class="eticket-route">
+        <div><div style="font-size:10px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-bottom:4px">FROM</div><div class="route-city" id="et-from">—</div></div>
+        <div class="route-arrow">→</div>
+        <div><div style="font-size:10px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-bottom:4px">TO</div><div class="route-city" id="et-to">—</div></div>
+      </div>
+      <div class="eticket-grid">
+        <div class="ef"><label>PNR Number</label><div class="ev big" id="et-pnr">—</div></div>
+        <div class="ef"><label>Train Name</label><div class="ev" id="et-train">—</div></div>
+        <div class="ef"><label>Passenger Name</label><div class="ev" id="et-name">—</div></div>
+        <div class="ef"><label>Age</label><div class="ev" id="et-age">—</div></div>
+        <div class="ef"><label>Journey Date</label><div class="ev" id="et-date">—</div></div>
+        <div class="ef"><label>Seat / Class</label><div class="ev" id="et-seat">—</div></div>
+        <div class="ef"><label>Booking Type</label><div class="ev" id="et-type">—</div></div>
+        <div class="ef"><label>Payment Mode</label><div class="ev" id="et-pay">—</div></div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;margin-bottom:16px">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px">AMOUNT PAID</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:26px;color:var(--success);font-weight:bold" id="et-amount">—</div>
+      </div>
+    </div>
+    <div class="eticket-footer">
+      <div class="ticket-stamp"><span>✓</span><span>CONFIRMED</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-success" onclick="downloadTicket()" style="padding:8px 16px;font-size:12px">⬇ Download PDF</button>
+        <button class="btn btn-outline" onclick="closeTicket()" style="padding:8px 16px;font-size:12px">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="payModal">
+  <div class="pay-modal">
+    <button class="close-modal" onclick="closePayModal()">✕</button>
+    <h2>💳 Complete Payment</h2>
+    <div class="amount" id="payAmount">₹0</div>
+    <div id="payFormArea">
+      <div class="pay-steps" id="paySteps">
+        <div class="pay-step" id="payStepCard" style="display:none">
+          <div class="pay-step-icon">💳</div>
+          <div class="pay-step-info" style="flex:1">
+            <label>Card Number</label>
+            <input type="text" id="cardNum" placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCard(this)">
+          </div>
+        </div>
+        <div class="pay-step" id="payStepUPI" style="display:none">
+          <div class="pay-step-icon">📱</div>
+          <div class="pay-step-info" style="flex:1">
+            <label>UPI ID</label>
+            <input type="text" id="upiId" placeholder="yourname@upi">
+          </div>
+        </div>
+        <div class="pay-step" id="payStepNet" style="display:none">
+          <div class="pay-step-icon">🏦</div>
+          <div class="pay-step-info" style="flex:1">
+            <label>Select Bank</label>
+            <select id="bankSel" style="background:transparent;border:none;outline:none;color:white;font-size:13px;width:100%">
+              <option value="">-- Select Bank --</option>
+              <option>SBI</option><option>HDFC</option><option>ICICI</option><option>Axis</option><option>Kotak</option>
+            </select>
+          </div>
+        </div>
+        <div class="pay-step" id="payStepWallet" style="display:none">
+          <div class="pay-step-icon">👛</div>
+          <div class="pay-step-info" style="flex:1">
+            <label>Wallet</label>
+            <select id="walletSel" style="background:transparent;border:none;outline:none;color:white;font-size:13px;width:100%">
+              <option>Paytm</option><option>PhonePe</option><option>Google Pay</option><option>Amazon Pay</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="processPayment()" style="width:100%;justify-content:center">Pay Now</button>
+    </div>
+    <div class="processing" id="payProcessing">
+      <div class="spinner"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-dim)">Processing payment...</div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🚄</div>
+    <div class="logo-text">
+      <h1>Railway Reservation System</h1>
+      <p>SRM Institute · OOP Project · Section 905-T1 · 2025</p>
+    </div>
+  </div>
+  <div class="hstats">
+    <div class="stat-pill"><div class="stat-dot"></div><span id="headerTotal">0 Active Bookings</span></div>
+    <div class="stat-pill">🎓 DHEETCHA · DHISHA · RAHINI</div>
+  </div>
+</header>
+
+<div class="main">
+  <aside class="sidebar">
+    <div>
+      <div class="slabel">Navigation</div>
+      <div class="nav-tab active" onclick="switchPanel('dashboard')"><div class="nav-tab-icon">📊</div>Dashboard</div>
+      <div class="nav-tab" onclick="switchPanel('book')"><div class="nav-tab-icon">🎫</div>Book Ticket</div>
+      <div class="nav-tab" onclick="switchPanel('view')"><div class="nav-tab-icon">📋</div>View Tickets</div>
+      <div class="nav-tab" onclick="switchPanel('cancel')"><div class="nav-tab-icon">❌</div>Cancel Ticket</div>
+    </div>
+    <div>
+      <div class="slabel">Live Stats</div>
+      <div class="qs-grid">
+        <div class="qs-card"><div class="qs-v" id="sbTotal">0</div><div class="qs-l">Booked</div></div>
+        <div class="qs-card"><div class="qs-v" id="sbCancelled" style="color:var(--danger)">0</div><div class="qs-l">Cancelled</div></div>
+        <div class="qs-card"><div class="qs-v" id="sbTatkal" style="color:var(--gold)">0</div><div class="qs-l">Tatkal</div></div>
+        <div class="qs-card"><div class="qs-v" id="sbNextPNR" style="font-size:14px">1000</div><div class="qs-l">Next PNR</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="slabel">Project Info</div>
+      <div class="ibox">
+        <div class="lbl">Students</div>
+        <div style="margin-bottom:2px">Dheetcha MS <span style="color:var(--text-dim);font-size:9px">· 010145</span></div>
+        <div style="margin-bottom:2px">Dhisha V <span style="color:var(--text-dim);font-size:9px">· 010162</span></div>
+        <div>Rahini T <span style="color:var(--text-dim);font-size:9px">· 010179</span></div>
+      </div>
+      <div class="ibox">
+        <div class="lbl">Faculty · Section</div>
+        <div>K Vinoth</div>
+        <div style="color:var(--accent);font-size:10px;margin-top:2px">Section 905-T1</div>
+      </div>
+    </div>
+    <div style="margin-top:auto">
+      <div class="slabel">Trains</div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:11px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;display:flex;justify-content:space-between"><span>🚅 Chennai Express</span><span style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:9px">12001</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;display:flex;justify-content:space-between"><span>🚄 Rajdhani Express</span><span style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:9px">12002</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;display:flex;justify-content:space-between"><span>🚃 Shatabdi Express</span><span style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:9px">12003</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;display:flex;justify-content:space-between"><span>🚂 Maharajas Express</span><span style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:9px">12004</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;display:flex;justify-content:space-between"><span>🚆 Duronto Express</span><span style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:9px">12005</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="ptitle">Dashboard</div>
+      <div class="psub">// System overview &amp; recent activity</div>
+      <div class="dashboard-grid">
+        <div class="dash-card dc-blue"><div class="dash-icon">🎫</div><div class="dash-val" id="dashTotal">0</div><div class="dash-lbl">Active Reservations</div></div>
+        <div class="dash-card dc-orange"><div class="dash-icon">❌</div><div class="dash-val" id="dashCancelled">0</div><div class="dash-lbl">Total Cancelled</div></div>
+        <div class="dash-card dc-green"><div class="dash-icon">💺</div><div class="dash-val" id="dashSeats">1</div><div class="dash-lbl">Next Seat No.</div></div>
+        <div class="dash-card dc-gold"><div class="dash-icon">⚡</div><div class="dash-val" id="dashTatkal">0</div><div class="dash-lbl">Tatkal Bookings</div></div>
+      </div>
+      <div class="activity-log">
+        <div class="slabel">Activity Log</div>
+        <div id="activityLog"><div class="act-item"><div class="act-dot d-view"></div><span>System initialized. Ready for reservations.</span><span class="act-time" id="initTime"></span></div></div>
+      </div>
+    </div>
+
+    <!-- BOOK TICKET -->
+    <div class="panel" id="panel-book">
+      <div class="ptitle">Book Ticket</div>
+      <div class="psub">// Fill all details to generate PNR &amp; e-ticket</div>
+      <div class="form-card">
+
+        <!-- Tatkal toggle -->
+        <div class="tatkal-toggle" id="tatkalToggle" onclick="toggleTatkal()" style="margin-bottom:14px">
+          <div class="toggle-switch" id="tatkalSwitch"></div>
+          <div>
+            <div class="tatkal-label">⚡ Tatkal Booking</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Extra charge applies — guaranteed seat</div>
+          </div>
+          <div class="tatkal-badge" id="tatkalBadge" style="margin-left:auto;display:none">TATKAL</div>
+        </div>
+
+        <div class="fgrid">
+          <div class="fg full"><label>Passenger Name</label><input type="text" id="passengerName" placeholder="Enter full name" autocomplete="off"></div>
+          <div class="fg"><label>Age</label><input type="number" id="passengerAge" placeholder="Age" min="1" max="120"></div>
+          <div class="fg"><label>Seat Class</label>
+            <select id="seatClass">
+              <option value="Sleeper">Sleeper (SL) — ₹250</option>
+              <option value="AC 3-Tier">AC 3-Tier (3A) — ₹750</option>
+              <option value="AC 2-Tier">AC 2-Tier (2A) — ₹1100</option>
+              <option value="First Class">First Class (1A) — ₹1800</option>
+            </select>
+          </div>
+          <div class="fg"><label>Journey Date</label><input type="date" id="journeyDate"></div>
+          <div class="fg"><label>From (Station)</label>
+            <select id="fromStation">
+              <option value="">Select Origin</option>
+              <option>Chennai Central</option><option>Mumbai CST</option><option>Delhi Junction</option>
+              <option>Bangalore City</option><option>Hyderabad Deccan</option><option>Kolkata Howrah</option>
+              <option>Pune Junction</option><option>Ahmedabad Junction</option><option>Jaipur Junction</option>
+              <option>Coimbatore Junction</option>
+            </select>
+          </div>
+          <div class="fg"><label>To (Station)</label>
+            <select id="toStation">
+              <option value="">Select Destination</option>
+              <option>Chennai Central</option><option>Mumbai CST</option><option>Delhi Junction</option>
+              <option>Bangalore City</option><option>Hyderabad Deccan</option><option>Kolkata Howrah</option>
+              <option>Pune Junction</option><option>Ahmedabad Junction</option><option>Jaipur Junction</option>
+              <option>Coimbatore Junction</option>
+            </select>
+          </div>
+          <div class="fg full"><label>Train Name</label>
+            <select id="trainName">
+              <option value="Chennai Express">🚅 Chennai Express (12001)</option>
+              <option value="Rajdhani Express">🚄 Rajdhani Express (12002)</option>
+              <option value="Shatabdi Express">🚃 Shatabdi Express (12003)</option>
+              <option value="Maharajas Express">🚂 Maharajas Express (12004)</option>
+              <option value="Duronto Express">🚆 Duronto Express (12005)</option>
+              <option value="Custom Train">✏️ Enter Custom Train</option>
+            </select>
+          </div>
+          <div class="fg full" id="customTrainGroup" style="display:none"><label>Custom Train Name</label><input type="text" id="customTrainName" placeholder="Enter train name"></div>
+        </div>
+
+        <div class="divider"></div>
+        <label style="display:block;margin-bottom:10px">Payment Mode</label>
+        <div class="payment-grid">
+          <div class="pay-opt selected" id="pay-Credit Card" onclick="selectPay('Credit Card')"><div class="pay-icon">💳</div><div class="pay-name">CREDIT CARD</div></div>
+          <div class="pay-opt" id="pay-Debit Card" onclick="selectPay('Debit Card')"><div class="pay-icon">💳</div><div class="pay-name">DEBIT CARD</div></div>
+          <div class="pay-opt" id="pay-UPI" onclick="selectPay('UPI')"><div class="pay-icon">📱</div><div class="pay-name">UPI</div></div>
+          <div class="pay-opt" id="pay-Net Banking" onclick="selectPay('Net Banking')"><div class="pay-icon">🏦</div><div class="pay-name">NET BANKING</div></div>
+          <div class="pay-opt" id="pay-Wallet" onclick="selectPay('Wallet')"><div class="pay-icon">👛</div><div class="pay-name">WALLET</div></div>
+          <div class="pay-opt" id="pay-Cash" onclick="selectPay('Cash')"><div class="pay-icon">💵</div><div class="pay-name">CASH</div></div>
+        </div>
+
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--text-dim)">Estimated Fare</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--success)" id="fareDisplay">₹250</span>
+        </div>
+
+        <div class="divider"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="initiateBooking()"><span>🎫</span> Book &amp; Pay</button>
+          <button class="btn btn-outline" onclick="clearBookForm()">Clear</button>
+        </div>
+
+        <!-- Booking success -->
+        <div id="bookingSuccess" style="display:none;margin-top:16px;background:linear-gradient(135deg,rgba(0,255,157,0.08),rgba(0,200,255,0.05));border:1px solid rgba(0,255,157,0.3);border-radius:12px;padding:18px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span style="font-size:22px">✅</span>
+            <div><div style="font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:1px">Ticket Booked &amp; Payment Confirmed!</div>
+            <div style="font-size:10px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;margin-top:1px">Your e-ticket is ready</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+            <div><div style="font-size:9px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">PNR</div><div style="font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--accent);font-weight:bold" id="bsPNR">—</div></div>
+            <div><div style="font-size:9px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Passenger</div><div style="font-size:13px;font-weight:700;color:white" id="bsName">—</div></div>
+            <div><div style="font-size:9px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Seat</div><div style="font-size:13px;font-weight:700;color:white" id="bsSeat">—</div></div>
+            <div><div style="font-size:9px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Paid</div><div style="font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--success)" id="bsAmount">—</div></div>
+          </div>
+          <button class="btn btn-gold" onclick="viewETicket(lastPNR)" style="padding:8px 16px;font-size:12px">🎟 View &amp; Download e-Ticket</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW TICKETS -->
+    <div class="panel" id="panel-view">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px">
+        <div><div class="ptitle">All Reservations</div><div class="psub" style="margin-bottom:0">// <span id="resCount">0</span> active bookings</div></div>
+        <input type="text" id="searchInput" placeholder="Search name or PNR..." style="width:200px;padding:8px 11px;font-size:12px" oninput="filterReservations()">
+      </div>
+      <div id="reservationsGrid"><div class="empty-state"><div style="font-size:44px;margin-bottom:10px;opacity:0.5">🚉</div><div style="font-family:'Rajdhani',sans-serif;font-size:18px;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;color:var(--text)">No Reservations Yet</div><p style="font-size:12px">Book your first ticket to see it here.</p></div></div>
+    </div>
+
+    <!-- CANCEL TICKET -->
+    <div class="panel" id="panel-cancel">
+      <div class="ptitle">Cancel Ticket</div>
+      <div class="psub">// Enter PNR to cancel — cancellation is permanent</div>
+      <div class="cancel-card">
+        <div class="warning-box"><span style="font-size:16px">⚠️</span><p>Cancellation is permanent. Refund will be processed to your original payment method within 5–7 business days.</p></div>
+        <div class="fg" style="margin-bottom:14px"><label>PNR Number</label><input type="number" id="cancelPNR" placeholder="Enter PNR (e.g. 1000)" oninput="previewCancel()"></div>
+        <div class="preview-card" id="cancelPreview">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--accent);margin-bottom:10px">RESERVATION DETAILS</div>
+          <div class="preview-row"><span>PASSENGER</span><span id="cpName">—</span></div>
+          <div class="preview-row"><span>FROM → TO</span><span id="cpRoute">—</span></div>
+          <div class="preview-row"><span>DATE</span><span id="cpDate">—</span></div>
+          <div class="preview-row"><span>TRAIN</span><span id="cpTrain">—</span></div>
+          <div class="preview-row"><span>SEAT / CLASS</span><span id="cpSeat">—</span></div>
+          <div class="preview-row"><span>BOOKING TYPE</span><span id="cpType">—</span></div>
+          <div class="preview-row"><span>AMOUNT PAID</span><span id="cpAmount">—</span></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button class="btn btn-danger" onclick="cancelTicket()"><span>❌</span> Cancel Ticket</button>
+          <button class="btn btn-outline" onclick="document.getElementById('cancelPNR').value='';hidePreview()">Clear</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let records=[],nextPNR=1000,nextSeat=1,cancelledCount=0,tatkalCount=0,activityItems=[],selectedPay='Credit Card',isTatkal=false,lastPNR=null,pendingRecord=null;
+document.getElementById('initTime').textContent=now();
+document.getElementById('journeyDate').min=new Date().toISOString().split('T')[0];
+
+const faremap={'Sleeper':250,'AC 3-Tier':750,'AC 2-Tier':1100,'First Class':1800};
+const tatkalExtra={'Sleeper':100,'AC 3-Tier':300,'AC 2-Tier':400,'First Class':500};
+
+document.getElementById('trainName').addEventListener('change',function(){document.getElementById('customTrainGroup').style.display=this.value==='Custom Train'?'block':'none';});
+document.getElementById('seatClass').addEventListener('change',updateFare);
+
+function updateFare(){
+  const cls=document.getElementById('seatClass').value.split(' — ')[0].split('(')[0].trim();
+  const key=Object.keys(faremap).find(k=>cls.startsWith(k))||'Sleeper';
+  const base=faremap[key]||250;
+  const extra=isTatkal?(tatkalExtra[key]||100):0;
+  document.getElementById('fareDisplay').textContent='₹'+(base+extra);
+}
+
+function toggleTatkal(){
+  isTatkal=!isTatkal;
+  const tog=document.getElementById('tatkalToggle');
+  const badge=document.getElementById('tatkalBadge');
+  tog.classList.toggle('on',isTatkal);
+  badge.style.display=isTatkal?'inline-flex':'none';
+  updateFare();
+}
+
+function selectPay(mode){
+  document.querySelectorAll('.pay-opt').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('pay-'+mode).classList.add('selected');
+  selectedPay=mode;
+}
+
+function getFare(){
+  const cls=document.getElementById('seatClass').value;
+  const key=Object.keys(faremap).find(k=>cls.startsWith(k))||'Sleeper';
+  return (faremap[key]||250)+(isTatkal?(tatkalExtra[key]||100):0);
+}
+
+function initiateBooking(){
+  const name=document.getElementById('passengerName').value.trim();
+  const age=parseInt(document.getElementById('passengerAge').value);
+  let train=document.getElementById('trainName').value;
+  const cls=document.getElementById('seatClass').value.split(' —')[0];
+  const date=document.getElementById('journeyDate').value;
+  const from=document.getElementById('fromStation').value;
+  const to=document.getElementById('toStation').value;
+  if(train==='Custom Train')train=document.getElementById('customTrainName').value.trim();
+  if(!name)return toast('error','Missing Name','Please enter passenger name.');
+  if(!age||age<1||age>120)return toast('error','Invalid Age','Please enter a valid age.');
+  if(!date)return toast('error','Missing Date','Please select journey date.');
+  if(!from)return toast('error','Missing Origin','Please select departure station.');
+  if(!to)return toast('error','Missing Destination','Please select destination station.');
+  if(from===to)return toast('error','Invalid Route','Origin and destination cannot be the same.');
+  if(!train)return toast('error','Missing Train','Please enter a train name.');
+  const fare=getFare();
+  pendingRecord={name,age,train,cls,date,from,to,tatkal:isTatkal,pay:selectedPay,fare};
+  if(selectedPay==='Cash'){confirmBooking();return;}
+  openPayModal(fare);
+}
+
+function openPayModal(fare){
+  document.getElementById('payAmount').textContent='₹'+fare;
+  ['payStepCard','payStepUPI','payStepNet','payStepWallet'].forEach(id=>document.getElementById(id).style.display='none');
+  if(selectedPay==='Credit Card'||selectedPay==='Debit Card')document.getElementById('payStepCard').style.display='flex';
+  else if(selectedPay==='UPI')document.getElementById('payStepUPI').style.display='flex';
+  else if(selectedPay==='Net Banking')document.getElementById('payStepNet').style.display='flex';
+  else if(selectedPay==='Wallet')document.getElementById('payStepWallet').style.display='flex';
+  document.getElementById('payFormArea').style.display='block';
+  document.getElementById('payProcessing').classList.remove('visible');
+  document.getElementById('payModal').classList.add('visible');
+}
+
+function processPayment(){
+  document.getElementById('payFormArea').style.display='none';
+  document.getElementById('payProcessing').classList.add('visible');
+  setTimeout(()=>{
+    document.getElementById('payModal').classList.remove('visible');
+    confirmBooking();
+  },2000);
+}
+
+function closePayModal(){document.getElementById('payModal').classList.remove('visible');}
+
+function confirmBooking(){
+  const r=pendingRecord;
+  const pnr=nextPNR++,seat=nextSeat++;
+  const rec={pnr,name:r.name,age:r.age,train:r.train,cls:r.cls,date:r.date,from:r.from,to:r.to,tatkal:r.tatkal,pay:r.pay,fare:r.fare,seat,time:now()};
+  records.push(rec);
+  lastPNR=pnr;
+  if(r.tatkal)tatkalCount++;
+  document.getElementById('bsPNR').textContent=pnr;
+  document.getElementById('bsName').textContent=r.name;
+  document.getElementById('bsSeat').textContent='Seat '+seat+' · '+r.cls;
+  document.getElementById('bsAmount').textContent='₹'+r.fare;
+  document.getElementById('bookingSuccess').style.display='block';
+  addActivity('book','Ticket booked for '+r.name+' | PNR: '+pnr+' | '+r.from+' → '+r.to+(r.tatkal?' ⚡TATKAL':''));
+  updateStats();
+  toast('success','Booking Confirmed!','PNR: '+pnr+' | ₹'+r.fare+' paid via '+r.pay);
+}
+
+function clearBookForm(){
+  ['passengerName','passengerAge','customTrainName'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('journeyDate').value='';
+  document.getElementById('fromStation').value='';
+  document.getElementById('toStation').value='';
+  document.getElementById('bookingSuccess').style.display='none';
+  isTatkal=false;
+  document.getElementById('tatkalToggle').classList.remove('on');
+  document.getElementById('tatkalBadge').style.display='none';
+  updateFare();
+}
+
+function viewETicket(pnr){
+  const r=records.find(x=>x.pnr===pnr);
+  if(!r)return;
+  document.getElementById('et-from').textContent=r.from;
+  document.getElementById('et-to').textContent=r.to;
+  document.getElementById('et-pnr').textContent=r.pnr;
+  document.getElementById('et-train').textContent=r.train;
+  document.getElementById('et-name').textContent=r.name;
+  document.getElementById('et-age').textContent=r.age+' yrs';
+  document.getElementById('et-date').textContent=fmtDate(r.date);
+  document.getElementById('et-seat').textContent='Seat '+r.seat+' · '+r.cls;
+  document.getElementById('et-type').textContent=r.tatkal?'⚡ Tatkal':'Regular';
+  document.getElementById('et-pay').textContent=r.pay;
+  document.getElementById('et-amount').textContent='₹'+r.fare;
+  document.getElementById('eticketModal').classList.add('visible');
+}
+
+function closeTicket(){document.getElementById('eticketModal').classList.remove('visible');}
+
+function downloadTicket(){
+  const content=document.getElementById('eticketContent').innerHTML;
+  const w=window.open('','_blank');
+  w.document.write('<html><head><title>e-Ticket</title><style>body{font-family:Arial,sans-serif;background:#0a0e1a;color:#c8d8f0;padding:20px}*{box-sizing:border-box}</style></head><body>'+content+'<script>window.print();<\/script></body></html>');
+  w.document.close();
+  toast('success','Downloading!','e-Ticket opened for printing/saving.');
+}
+
+function renderReservations(filter=''){
+  const grid=document.getElementById('reservationsGrid');
+  const f=filter.toLowerCase();
+  const filtered=records.filter(r=>r.name.toLowerCase().includes(f)||String(r.pnr).includes(filter));
+  document.getElementById('resCount').textContent=filtered.length;
+  if(filtered.length===0){grid.innerHTML='<div class="empty-state"><div style="font-size:44px;margin-bottom:10px;opacity:0.5">🚉</div><div style="font-family:\'Rajdhani\',sans-serif;font-size:18px;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;color:var(--text)">'+(records.length===0?'No Reservations Yet':'No Results')+'</div><p style="font-size:12px">'+(records.length===0?'Book your first ticket.':'Try different search.')+'</p></div>';return;}
+  grid.innerHTML=filtered.map(r=>`
+    <div class="res-card">
+      <div class="res-pnr"><div class="pnr-label">PNR</div><div class="pnr-value">${r.pnr}</div></div>
+      <div class="res-info">
+        <div class="rfield"><label>Passenger</label><div class="val">${r.name} <span style="color:var(--text-dim);font-size:10px">(${r.age}y)</span></div></div>
+        <div class="rfield"><label>Route</label><div class="val" style="font-size:11px">${r.from}<br>→ ${r.to}</div></div>
+        <div class="rfield"><label>Date</label><div class="val" style="font-size:11px">${fmtDate(r.date)}</div></div>
+        <div class="rfield"><label>Train · Seat</label>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px">
+            <span class="badge badge-seat">💺 ${r.seat}</span>
+            <span class="badge badge-class">${r.cls}</span>
+            ${r.tatkal?'<span class="badge badge-tatkal">⚡ TATKAL</span>':''}
+          </div>
+        </div>
+        <div class="rfield"><label>Paid / Mode</label><div class="val" style="font-size:11px;color:var(--success)">₹${r.fare}</div><span class="badge badge-pay" style="margin-top:2px">${r.pay}</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn" onclick="viewETicket(${r.pnr})" style="padding:6px 10px;font-size:10px;background:linear-gradient(135deg,var(--gold),#cc9900);color:#000">🎟 e-Ticket</button>
+        <button class="btn btn-danger" onclick="quickCancel(${r.pnr})" style="padding:6px 10px;font-size:10px">❌ Cancel</button>
+      </div>
+    </div>`).join('');
+}
+
+function filterReservations(){renderReservations(document.getElementById('searchInput').value);}
+
+function previewCancel(){
+  const pnr=parseInt(document.getElementById('cancelPNR').value);
+  const rec=records.find(r=>r.pnr===pnr);
+  const preview=document.getElementById('cancelPreview');
+  if(rec){
+    document.getElementById('cpName').textContent=rec.name+', Age '+rec.age;
+    document.getElementById('cpRoute').textContent=rec.from+' → '+rec.to;
+    document.getElementById('cpDate').textContent=fmtDate(rec.date);
+    document.getElementById('cpTrain').textContent=rec.train;
+    document.getElementById('cpSeat').textContent='Seat '+rec.seat+' · '+rec.cls;
+    document.getElementById('cpType').textContent=rec.tatkal?'⚡ Tatkal':'Regular';
+    document.getElementById('cpAmount').textContent='₹'+rec.fare;
+    preview.classList.add('visible');
+  }else{preview.classList.remove('visible');}
+}
+
+function hidePreview(){document.getElementById('cancelPreview').classList.remove('visible');}
+
+function cancelTicket(){
+  const pnr=parseInt(document.getElementById('cancelPNR').value);
+  const idx=records.findIndex(r=>r.pnr===pnr);
+  if(idx===-1)return toast('error','PNR Not Found','No booking for PNR: '+pnr);
+  const rec=records[idx];
+  if(rec.tatkal)tatkalCount--;
+  records.splice(idx,1);cancelledCount++;
+  document.getElementById('cancelPNR').value='';
+  hidePreview();
+  addActivity('cancel','Ticket cancelled for '+rec.name+' — PNR: '+pnr+' | Refund: ₹'+rec.fare);
+  updateStats();
+  toast('info','Ticket Cancelled','Refund of ₹'+rec.fare+' initiated to '+rec.pay+'.');
+}
+
+function quickCancel(pnr){
+  const idx=records.findIndex(r=>r.pnr===pnr);
+  if(idx===-1)return;
+  const rec=records[idx];
+  if(rec.tatkal)tatkalCount--;
+  records.splice(idx,1);cancelledCount++;
+  addActivity('cancel','Ticket cancelled for '+rec.name+' — PNR: '+pnr);
+  updateStats();
+  renderReservations(document.getElementById('searchInput').value);
+  toast('info','Ticket Cancelled','Refund of ₹'+rec.fare+' initiated.');
+}
+
+function switchPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelectorAll('.nav-tab')[['dashboard','book','view','cancel'].indexOf(name)].classList.add('active');
+  if(name==='view')renderReservations();
+  if(name==='dashboard')updateDashboard();
+}
+
+function updateStats(){
+  document.getElementById('sbTotal').textContent=records.length;
+  document.getElementById('sbCancelled').textContent=cancelledCount;
+  document.getElementById('sbTatkal').textContent=tatkalCount;
+  document.getElementById('sbNextPNR').textContent=nextPNR;
+  document.getElementById('headerTotal').textContent=records.length+' Active Booking'+(records.length!==1?'s':'');
+  updateDashboard();
+}
+
+function updateDashboard(){
+  document.getElementById('dashTotal').textContent=records.length;
+  document.getElementById('dashCancelled').textContent=cancelledCount;
+  document.getElementById('dashSeats').textContent=nextSeat;
+  document.getElementById('dashTatkal').textContent=tatkalCount;
+}
+
+function addActivity(type,msg){
+  activityItems.unshift({type,msg,time:now()});
+  if(activityItems.length>20)activityItems.pop();
+  renderActivity();
+}
+
+function renderActivity(){
+  const log=document.getElementById('activityLog');
+  const cm={book:'d-book',cancel:'d-cancel',view:'d-view',pay:'d-pay'};
+  log.innerHTML='<div class="act-item"><div class="act-dot d-view"></div><span>System initialized. Ready for reservations.</span><span class="act-time">'+document.getElementById('initTime')?.textContent+'</span></div>'+activityItems.map(a=>'<div class="act-item"><div class="act-dot '+(cm[a.type]||'d-view')+'"></div><span>'+a.msg+'</span><span class="act-time">'+a.time+'</span></div>').join('');
+}
+
+function toast(type,title,msg){
+  const icons={success:'✅',error:'❌',info:'ℹ️',warn:'⚠️'};
+  const el=document.createElement('div');el.className='toast '+type;
+  el.innerHTML='<div style="font-size:15px">'+icons[type]+'</div><div><div class="toast-title">'+title+'</div><div class="toast-msg">'+msg+'</div></div>';
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>{el.style.animation='slideOut 0.3s ease forwards';setTimeout(()=>el.remove(),300);},4000);
+}
+
+function fmtDate(d){if(!d)return '—';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtCard(el){let v=el.value.replace(/\D/g,'').substring(0,16);el.value=v.replace(/(.{4})/g,'$1 ').trim();}
+function now(){return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+updateFare();
+</script>
+</body>
+</html>
